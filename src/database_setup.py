@@ -19,9 +19,18 @@ def create_database():
     );
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reviews (
+        review_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        anime_id INTEGER,
+        review_text TEXT NOT NULL,
+        FOREIGN KEY (anime_id) REFERENCES anime(mal_id)
+    );
+    """)
+
     conn.commit()
     conn.close()
-    print(f"Database `{DATABASE_NAME}` and table 'anime' created successfully.")
+    print(f"Database `{DATABASE_NAME}` and table 'anime', 'reviews' created successfully.")
 
 if __name__ == "__main__":
     create_database()

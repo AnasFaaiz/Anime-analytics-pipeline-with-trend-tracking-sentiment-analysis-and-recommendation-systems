@@ -24,6 +24,22 @@ def load_data():
 
 df = load_data()
 
+st.sidebar.header("Filter Options ")
+
+all_genres = sorted(list(set(', '.join(df['genres']).split(', '))))
+all_genres = [genre for genre in all_genres if genre]
+
+selected_genres = st.sidebar.multiselect(
+    "Select Genres to Filter",
+    options = all_genres,
+    default=[]
+)
+
+if selected_genres:
+    filtered_df = df[df['genres'].apply(lambda genres_str: any(g in genres_str for g in selected_genres))]
+else:
+    filtered_df = df
+
 # --- Main Page ---
 st.title("📊 Anime Analytics Dashboard")
 st.markdown("Exploring trends from the Top 100 Anime on MyAnimeList.")
@@ -43,15 +59,19 @@ st.pyplot(fig1)
 
 # -- Chart 2: Top Studios --
 st.header("Top 10 Studios by Production Count")
-studios = df['studio'].str.split(', ').explode().str.strip()
-top_10_studios = studios.value_counts().nlargest(10)
-fig2, ax2 = plt.subplots(figsize=(10, 6))
-sns.barplot(x=top_10_studios.values, y=top_10_studios.index, palette='mako', ax=ax2)
-ax2.set_title('Top 10 Studios by Number of Productions (in Top 100)')
-ax2.set_xlabel('Number of Productions')
-ax2.set_ylabel('Studio')
-st.pyplot(fig2)
+if not filtered_df.empty:
+    studios = df['studio'].str.split(', ').explode().str.strip()
+    top_10_studios = studios.value_counts().nlargest(10)
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    sns.barplot(x=top_10_studios.values, y=top_10_studios.index, palette='mako', ax=ax2)
+    ax2.set_title('Top 10 Studios by Number of Productions (in Top 100)')
+    ax2.set_xlabel('Number of Productions')
+    ax2.set_ylabel('Studio')
+    st.pyplot(fig2)
+else:
+    st.write("No data to display for the selected genre(s).")
+
 
 # -- Raw Data Viewer --
-st.header("Raw Data")
-st.dataframe(df)
+st.header("Filtered Data")
+st.dataframe(filtered_df)
