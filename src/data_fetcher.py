@@ -19,6 +19,25 @@ def fetch_top_anime(pages=1):
             break
     return all_anime
 
+def fetch_anime_reviews(anime_id):
+    """Fetches reviews for a specific anime from the Jikan API"""
+    reviews_url = f"https://api.jikan.moe/v4/anime/{anime_id}/reviews"
+    try:
+        print(f"fteching reviews for anime ID {anime_id}..")
+        response = requests.get(reviews_url)
+        response.raise_for_status()
+        data = response.json()
+
+        reviews = [
+            (anime_id, review['review'])
+            for review in data.get("data", [])
+        ]
+        time.sleep(1)
+        return reviews
+    except requests.execptions.RequestException as e:
+        print(f"An error occurred while fetching reviews for anime ID {anime_id}..")
+        return []
+
 if __name__ == "__main__":
     top_anime_data = fetch_top_anime(pages=4)
     if top_anime_data:
