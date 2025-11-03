@@ -3,3 +3,7 @@ pandas
 streamlit
 matplotlib
 seaborn
+plotly
+tqdm
+transformers==4.44.0
+torch==2.4.1

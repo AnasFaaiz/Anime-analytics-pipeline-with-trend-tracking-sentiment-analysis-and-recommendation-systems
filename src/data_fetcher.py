@@ -3,42 +3,34 @@ import time
 
 API_URL = "https://api.jikan.moe/v4/top/anime"
 
-def fetch_top_anime(pages=1):
-    """Fetch the top anime from the Jikan API for a given number of pages."""
+def fetch_top_anime(pages=4, limit=25):
+    """Fetch the top anime from the Jikan API."""
     all_anime = []
     for page in range(1, pages + 1):
         print(f"Fetching page {page}...")
         try:
-            response = requests.get(API_URL, params={"page": page })
+            response = requests.get(API_URL, params={"page": page, "limit": limit})
             response.raise_for_status()
             data = response.json()
-            all_anime.extend(data.get("data", []))
-            time.sleep(1)
+            anime_page = data.get("data", [])
+            all_anime.extend(anime_page)
+            print(f"Page {page}: {len(anime_page)} anime fetched.")
         except requests.exceptions.RequestException as e:
-            print(f"An error occurred: {e}")
+            print(f"Error on page {page}: {e}")
             break
+        time.sleep(1)  # Rate limit
     return all_anime
 
-def fetch_anime_reviews(anime_id):
-    """Fetches reviews for a specific anime from the Jikan API"""
-    reviews_url = f"https://api.jikan.moe/v4/anime/{anime_id}/reviews"
+def fetch_anime_reviews(mal_id):
+    """Fetches reviews for a specific anime."""
+    reviews_url = f"https://api.jikan.moe/v4/anime/{mal_id}/reviews"
     try:
-        print(f"fteching reviews for anime ID {anime_id}..")
+        print(f"Fetching reviews for anime ID {mal_id}...")
         response = requests.get(reviews_url)
         response.raise_for_status()
         data = response.json()
-
-        reviews = [
-            (anime_id, review['review'])
-            for review in data.get("data", [])
-        ]
-        time.sleep(1)
-        return reviews
-    except requests.execptions.RequestException as e:
-        print(f"An error occurred while fetching reviews for anime ID {anime_id}..")
+        reviews = data.get("data", [])
+        return reviews  # List of dicts with 'body', 'reviewer', 'date'
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching reviews for {mal_id}: {e}")
         return []
-
-if __name__ == "__main__":
-    top_anime_data = fetch_top_anime(pages=4)
-    if top_anime_data:
-        print(f"Successfully fetched {len(top_anime_data)} anime entries.")
