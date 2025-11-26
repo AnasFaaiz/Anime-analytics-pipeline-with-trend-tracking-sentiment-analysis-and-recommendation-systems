@@ -1,4 +1,3 @@
-# src/database_setup.py
 import sqlite3
 
 DATABASE_NAME = "anime.db"
@@ -7,50 +6,48 @@ def create_database():
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
 
-    # === ANIME TABLE ===
+    # Drop old tables to ensure we start fresh with new columns
+    cursor.execute("DROP TABLE IF EXISTS anime")
+    cursor.execute("DROP TABLE IF EXISTS reviews")
+
+    # ANIME TABLE (Updated with image_url and synopsis)
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS anime (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        mal_id INTEGER UNIQUE NOT NULL,
+    CREATE TABLE anime (
+        mal_id INTEGER PRIMARY KEY,
         title TEXT NOT NULL,
         score REAL,
         episodes INTEGER,
         status TEXT,
         genres TEXT,
         studio TEXT,
-        aired TEXT
+        aired TEXT,
+        image_url TEXT,  -- <--- This is the column you were missing
+        synopsis TEXT,
+        popularity INTEGER,
+        members INTEGER
     );
     """)
 
-    # === REVIEWS TABLE ===
+    # REVIEWS TABLE
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS reviews (
+    CREATE TABLE reviews (
         review_id INTEGER PRIMARY KEY AUTOINCREMENT,
         anime_mal_id INTEGER,
         review_text TEXT NOT NULL,
         reviewer_name TEXT,
         date TEXT,
-        sentiment REAL,
+        score INTEGER,
+        sentiment_label TEXT,
         sentiment_score REAL,
-        -- Generated column: first 200 chars of review_text
-        review_text_preview TEXT GENERATED ALWAYS AS (substr(review_text, 1, 200)) VIRTUAL,
         FOREIGN KEY (anime_mal_id) REFERENCES anime(mal_id) ON DELETE CASCADE
     );
     """)
 
-    # === INDEXES ===
-    # Fast lookup by anime
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_reviews_anime ON reviews(anime_mal_id);")
-    
-    # Prevent duplicate reviews (same anime + same first 200 chars)
-    cursor.execute("""
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_review 
-        ON reviews (anime_mal_id, review_text_preview)
-    """)
 
     conn.commit()
     conn.close()
-    print(f"Database `{DATABASE_NAME}` created successfully with safe unique index.")
+    print(f"Database `{DATABASE_NAME}` created/reset with improved schema.")
 
 if __name__ == "__main__":
     create_database()
